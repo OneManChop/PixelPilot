@@ -1,8 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
+    <!-- Hardware features -->
     <uses-feature android:name="android.hardware.usb.host" />
-
+    <uses-feature android:name="android.hardware.vr.headtracking" android:required="true" />
+    
+    <!-- OpenXR features -->
+    <uses-feature android:name="org.khronos.openxr" android:required="true" />
+    <uses-feature android:name="com.oculus.feature.HAND_TRACKING" android:required="true" />
+    <uses-feature android:name="com.oculus.feature.PASSTHROUGH" android:required="true" />
+    <uses-feature android:name="com.oculus.feature.SPATIAL_ENTITY" android:required="false" />
+    
+    <!-- Permissions -->
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
     <uses-permission android:name="android.permission.INTERNET" />
@@ -14,6 +23,11 @@
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.BIND_VPN_SERVICE" />
+    
+    <!-- Meta Quest permissions -->
+    <uses-permission android:name="com.oculus.permission.HAND_TRACKING" />
+    <uses-permission android:name="com.oculus.permission.PASSTHROUGH" />
+    <uses-permission android:name="com.oculus.permission.SPATIAL_ENTITY" />
 
     <application
         android:allowBackup="true"
@@ -45,11 +59,18 @@
         </provider>
 
         <activity
-            android:name=".VideoActivity"
+            android:name=".openxr.OpenXRVideoActivity"
             android:exported="true"
             android:launchMode="singleInstance"
-            android:screenOrientation="sensorLandscape"
+            android:configChanges="density|keyboardHidden|navigation|orientation|screenSize|uiMode"
+            android:enableVrMode="true"
+            android:resizeableActivity="false"
             android:theme="@style/Theme.FPVueMat">
+            
+            <meta-data android:name="com.oculus.vr.focusaware" android:value="true" />
+            <meta-data android:name="com.oculus.supportedDevices" android:value="quest|quest2|quest3" />
+            <meta-data android:name="com.oculus.handtracking.frequency" android:value="HIGH" />
+            <meta-data android:name="com.oculus.handtracking.version" android:value="V2.1" />
 
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

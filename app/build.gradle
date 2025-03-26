@@ -51,4 +51,22 @@ dependencies {
     implementation(libs.appcompat)
     implementation(libs.material)
     implementation(libs.philjay.mpandroidchart)
+    
+    // OpenXR dependencies
+    implementation 'org.khronos.openxr:openxr_loader_for_android:1.0.28'
+    
+    // Meta Quest SDK
+    implementation 'com.oculus.openxr:loader:1.0.28'
+    
+    // 3D rendering libraries
+    implementation 'org.rajawali3d:rajawali:1.2.1970'
+    
+    // Hand tracking - updated to 2.1
+    implementation 'com.oculus.openxr:hand-tracking:2.1.0'
+    
+    // Meta Quest passthrough
+    implementation 'com.oculus.openxr:passthrough:1.0.0'
+    
+    // Meta Quest spatial anchors
+    implementation 'com.oculus.openxr:spatial-entity:1.0.0'
 }
