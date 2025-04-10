@@ -56,6 +56,7 @@ import com.openipc.mavlink.MavlinkUpdate;
 import com.openipc.pixelpilot.databinding.ActivityVideoBinding;
 import com.openipc.pixelpilot.osd.OSDElement;
 import com.openipc.pixelpilot.osd.OSDManager;
+import com.openipc.pixelpilot.MspOsdIntegration;
 import com.openipc.videonative.DecodingInfo;
 import com.openipc.videonative.IVideoParamsChanged;
 import com.openipc.videonative.VideoPlayer;
@@ -103,6 +104,7 @@ public class VideoActivity extends AppCompatActivity implements IVideoParamsChan
     VideoPlayer videoPlayer;
     private ActivityVideoBinding binding;
     private OSDManager osdManager;
+    private MspOsdIntegration mspOsdIntegration;
     private ParcelFileDescriptor dvrFd = null;
     private Timer dvrIconTimer = null;
     private Timer recordTimer = null;
@@ -491,8 +493,13 @@ public class VideoActivity extends AppCompatActivity implements IVideoParamsChan
      * Sets up the On-Screen Display (OSD) manager for telemetry or other overlays.
      */
     private void setupOSDManager() {
+        // Initialize standard OSD
         osdManager = new OSDManager(this, binding);
         osdManager.setUp();
+        
+        // Initialize MSP OSD overlay
+        mspOsdIntegration = new MspOsdIntegration(this, binding.frameLayout, wfbLink);
+        mspOsdIntegration.initialize();
     }
 
     // ----------------------------------------------------------------------------
@@ -629,6 +636,28 @@ public class VideoActivity extends AppCompatActivity implements IVideoParamsChan
         lock.setOnMenuItemClickListener(item -> {
             osdManager.lockOSD(!osdManager.isOSDLocked());
             lock.setTitle(osdManager.getTitle());
+            item.setShowAsAction(MenuItem.SHOW_AS_ACTION_COLLAPSE_ACTION_VIEW);
+            item.setActionView(new View(this));
+            return false;
+        });
+        
+        // Add MSP OSD toggle
+        MenuItem mspOsdToggle = osd.add("MSP ground rendering");
+        mspOsdToggle.setCheckable(true);
+        boolean mspOsdEnabled = getSharedPreferences("general", MODE_PRIVATE).getBoolean("msp_osd_enabled", true);
+        mspOsdToggle.setChecked(mspOsdEnabled);
+        if (mspOsdIntegration != null) {
+            mspOsdIntegration.setEnabled(mspOsdEnabled);
+        }
+        mspOsdToggle.setOnMenuItemClickListener(item -> {
+            boolean newState = !item.isChecked();
+            item.setChecked(newState);
+            SharedPreferences.Editor editor = getSharedPreferences("general", MODE_PRIVATE).edit();
+            editor.putBoolean("msp_osd_enabled", newState);
+            editor.apply();
+            if (mspOsdIntegration != null) {
+                mspOsdIntegration.setEnabled(newState);
+            }
             item.setShowAsAction(MenuItem.SHOW_AS_ACTION_COLLAPSE_ACTION_VIEW);
             item.setActionView(new View(this));
             return false;
@@ -1181,6 +1210,12 @@ public class VideoActivity extends AppCompatActivity implements IVideoParamsChan
         wfbLinkManager.setBandwidth(getBandwidth(this));
         wfbLinkManager.refreshAdapters();
         osdManager.restoreOSDConfig();
+        
+        // Restore MSP OSD state
+        if (mspOsdIntegration != null) {
+            boolean mspOsdEnabled = getSharedPreferences("general", MODE_PRIVATE).getBoolean("msp_osd_enabled", true);
+            mspOsdIntegration.setEnabled(mspOsdEnabled);
+        }
 
         super.onResume();
     }
@@ -1266,6 +1301,11 @@ public class VideoActivity extends AppCompatActivity implements IVideoParamsChan
 
     @Override
     public void onWfbNgStatsChanged(WfbNGStats data) {
+        // Process telemetry data for MSP OSD if available
+        if (mspOsdIntegration != null && data.raw_telemetry != null && data.raw_telemetry.length > 0) {
+            mspOsdIntegration.processTelemetry(data.raw_telemetry);
+        }
+        
         runOnUiThread(() -> {
             if (data.count_p_all > 0) {
                 binding.tvMessage.setVisibility(View.INVISIBLE);
