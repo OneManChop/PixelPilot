@@ -8,3 +8,6 @@
 	url = https://github.com/svpcom/wfb-ng.git
 	branch = master
 
+[submodule "app/msposd"]
+	path = app/msposd
+	url = https://github.com/OpenIPC/msposd.git
